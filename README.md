@@ -4,6 +4,29 @@ Google Cloud に小さく安全な土台環境を作る Terraform コードで�
 外部 IP を持たない VM を前提に、IAP 経由の SSH だけを許可するゼロトラスト型の入口と、
 ログの保管までを最小構成でまとめています。
 
+## 構成図
+
+```mermaid
+flowchart TB
+  admin["管理者"] -->|"gcloud compute ssh --tunnel-through-iap"| iap["Identity-Aware Proxy<br>35.235.240.0/20"]
+  subgraph vpc["VPC（カスタムモード）"]
+    subgraph subnet["サブネット 10.10.0.0/20"]
+      vm["VM（今後追加・外部IPなし）<br>タグ: iap-ssh"]
+    end
+    fw1["FW：IAPからのSSH（22）のみ許可"]
+    fw2["FW：その他の受信はすべて拒否"]
+    router["Cloud Router"] --- nat["Cloud NAT"]
+  end
+  internet((インターネット))
+  iap -->|"SSH 22"| vm
+  vm -->|"外向き通信"| nat
+  nat --> internet
+  sink["ログシンク"]
+  subnet -. "フローログ" .-> sink
+  audit["監査ログ"] -.-> sink
+  sink -->|"専用サービスアカウントのみ書き込み"| gcs[("GCS ログバケット<br>公開禁止・90日で自動削除")]
+```
+
 ## 作られるもの
 
 | リソース | 内容 |
