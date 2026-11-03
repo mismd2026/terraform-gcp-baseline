@@ -1,0 +1,4 @@
+# このファイルを terraform.tfvars にコピーして値を入れる（terraform.tfvars はコミットしない）
+project_id = "your-project-id"
+name       = "baseline"
+region     = "asia-northeast1"
